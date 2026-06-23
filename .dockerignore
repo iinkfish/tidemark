@@ -1,0 +1,4 @@
+node_modules
+src/scrapers
+.env
+.DS_Store
