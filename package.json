@@ -1,0 +1,36 @@
+{
+  "name": "tidemark",
+  "version": "0.1.0",
+  "description": "webscraper orchestrator",
+  "keywords": [
+    "webscraping",
+    "node",
+    "environmental",
+    "data",
+    "influxdb",
+    "db"
+  ],
+  "homepage": "https://github.com/iinkfish/tidemark#readme",
+  "bugs": {
+    "url": "https://github.com/iinkfish/tidemark/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/iinkfish/tidemark.git"
+  },
+  "license": "MIT",
+  "author": "inkfish",
+  "type": "module",
+  "main": "src/main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node src/main.js"
+  },
+  "dependencies": {
+    "@influxdata/influxdb-client": "^1.35.0",
+    "axios": "^1.18.0",
+    "cheerio": "^1.2.0",
+    "croner": "^10.0.1",
+    "dotenv": "^17.4.2"
+  }
+}

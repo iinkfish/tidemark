@@ -1,19 +1,20 @@
 import { readdir, access } from "fs/promises";
 import { resolve, dirname } from "path";
 import { fileURLToPath, pathToFileURL } from "url";
-import { exec } from "child_process"; 
-import { fork } from "child_process"; 
-import { promisify } from "util"; 
+import { exec } from "child_process";
+import { fork } from "child_process";
+import { promisify } from "util";
 import { Cron } from "croner";
-import { writeScraperResult, closeDb } from "./db.js"; 
+import { writeScraperResult, closeDb } from "./db.js";
 
-const execAsync = promisify(exec); 
+const execAsync = promisify(exec);
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const SCRAPERS_DIR = resolve(__dirname, "scrapers");
 const DEFAULT_SCHEDULE = "0 * * * *";
 const DISCOVERY_SCHEDULE = "*/1 * * * *";
-const SCRAPER_TIMEOUT_MS = 30000; // changed: added timeout constant
+const SCRAPER_TIMEOUT_MS = 30000;
+const DEFAULT_SCHEMA = "environmental-schema"
 
 // file path → Cron instance
 const scheduled = new Map();
@@ -50,12 +51,12 @@ async function installDeps({ dir }) {
 }
 
 async function runScraperInChildProcess(file) {
-  const runnerPath = resolve(__dirname, "scraperRunner.js");
+  const runnerPath = resolve(__dirname, "scraperRunner.mjs");
 
   return new Promise((resolve, reject) => {
     const child = fork(runnerPath, [file], {
       env: {}, // changed: empty env, no leaking of parent env vars
-      silent: true,
+      silent: false,
     });
 
     const timer = setTimeout(() => {
@@ -87,6 +88,7 @@ async function runScraper(file, name) {
   try {
     const result = await runScraperInChildProcess(file);
     await writeScraperResult(name, result);
+    console.log(`[${name}] Result:`, result);
     console.log(`[${name}] Written to InfluxDB`);
   } catch (err) {
     console.error(`[${name}] Failed:`, err.message);
@@ -124,9 +126,10 @@ async function discoverAndSchedule() {
       const module = await import(filePath);
       const name = module.config?.name ?? file;
       const schedule = module.config?.schedule ?? DEFAULT_SCHEDULE;
+      const schema = module.config?.pointSchema ?? DEFAULT_SCHEMA;
 
       const job = new Cron(schedule, async () => {
-        await runScraper(file, name); 
+        await runScraper(file, name);
       });
 
       scheduled.set(file, job);

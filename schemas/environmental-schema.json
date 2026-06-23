@@ -1,0 +1,3 @@
+{
+  "required": ["location", "fields", "measurement", "time", "medium"]
+}
