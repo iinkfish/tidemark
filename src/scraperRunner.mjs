@@ -9,9 +9,12 @@ async function loadSchema(name) {
   try {
     const raw = await readFile(schemaPath, "utf-8");
     return JSON.parse(raw);
-  } catch {
-    return null; // no schema defined, skip validation
-  }
+  } catch (err) {
+      if (err.code === "ENOENT") {
+        throw new Error(`Schema "${name}" not found at ${schemaPath}`);
+      }
+      throw new Error(`Failed to load schema "${name}": ${err.message}`);
+    }
 }
 
 function validate(result, schema) {
@@ -43,14 +46,11 @@ async function main() {
 
   const result = await module.run();
 
-
-  if (schema) {
-    try {
-      validate(result, schema);
-    } catch (err) {
-      console.error(`Validation failed for [${schemaName}]: ${err.message}`);
-      process.exit(1);
-    }
+  try {
+    validate(result, schema);
+  } catch (err) {
+    console.error(`Validation failed for [${schemaName}]: ${err.message}`);
+    process.exit(1);
   }
 
   process.send(result);
