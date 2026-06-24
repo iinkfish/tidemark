@@ -5,7 +5,7 @@ import { exec } from "child_process";
 import { fork } from "child_process";
 import { promisify } from "util";
 import { Cron } from "croner";
-import { writeScraperResult, closeDb } from "./db.js";
+import { writeScraperResult, closeDb, initDb } from "./db.js";
 
 const execAsync = promisify(exec);
 
@@ -141,13 +141,13 @@ async function discoverAndSchedule() {
 }
 
 async function start() {
-  console.log("Orchestrator started");
-
+  console.log("Tidemark initializing...");
+  await initDb();
   await discoverAndSchedule();
 
   new Cron(DISCOVERY_SCHEDULE, discoverAndSchedule);
 
-  console.log("Orchestrator running...");
+  console.log("Tidemark running...");
 }
 
 // Graceful shutdown
