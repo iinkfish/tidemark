@@ -126,6 +126,7 @@ export async function writeScraperResult(scraperName, result) {
   } catch(error) {
     console.error("Failed to write to DB with the scraper ", scraperName);
     console.error(error);
+  }
 }
 
 export async function closeDb() {
