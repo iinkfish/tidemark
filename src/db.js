@@ -13,49 +13,56 @@ const stationCache = new Map();
 const fieldCache = new Set();
 
 export async function initDb() {
-  await sql`
-    CREATE TABLE IF NOT EXISTS stations (
-      id         SERIAL PRIMARY KEY,
-      name       TEXT NOT NULL UNIQUE,
-      medium     TEXT NOT NULL,
-      location   TEXT,
-      created_at TIMESTAMPTZ DEFAULT now()
-    )
-  `;
-
-  await sql`
-    CREATE TABLE IF NOT EXISTS scraper_fields (
-      id         SERIAL PRIMARY KEY,
-      station_id INT NOT NULL REFERENCES stations(id),
-      field      TEXT NOT NULL,
-      unit       TEXT NOT NULL,
-      UNIQUE (station_id, field)
-    )
-  `;
-
-  await sql`
-    CREATE TABLE IF NOT EXISTS measurements (
-      time       TIMESTAMPTZ NOT NULL,
-      station_id INT NOT NULL REFERENCES stations(id),
-      scraped_at TIMESTAMPTZ NOT NULL,
-      fields     JSONB NOT NULL
-    )
-  `;
-
-  await sql`
-    CREATE INDEX IF NOT EXISTS measurements_time_idx
-    ON measurements USING BRIN (time)
-  `;
-
-  await sql`
-    CREATE INDEX IF NOT EXISTS measurements_station_id_idx
-    ON measurements (station_id)
-  `;
-
-  await sql`
-    CREATE INDEX IF NOT EXISTS measurements_fields_idx
-    ON measurements USING GIN (fields)
-  `;
+  try {
+    console.log("Initializing DB");
+    await sql`
+      CREATE TABLE IF NOT EXISTS stations (
+        id         SERIAL PRIMARY KEY,
+        name       TEXT NOT NULL UNIQUE,
+        medium     TEXT NOT NULL,
+        location   TEXT,
+        created_at TIMESTAMPTZ DEFAULT now()
+      )
+    `;
+  
+    await sql`
+      CREATE TABLE IF NOT EXISTS scraper_fields (
+        id         SERIAL PRIMARY KEY,
+        station_id INT NOT NULL REFERENCES stations(id),
+        field      TEXT NOT NULL,
+        unit       TEXT NOT NULL,
+        UNIQUE (station_id, field)
+      )
+    `;
+  
+    await sql`
+      CREATE TABLE IF NOT EXISTS measurements (
+        time       TIMESTAMPTZ NOT NULL,
+        station_id INT NOT NULL REFERENCES stations(id),
+        scraped_at TIMESTAMPTZ NOT NULL,
+        fields     JSONB NOT NULL
+      )
+    `;
+  
+    await sql`
+      CREATE INDEX IF NOT EXISTS measurements_time_idx
+      ON measurements USING BRIN (time)
+    `;
+  
+    await sql`
+      CREATE INDEX IF NOT EXISTS measurements_station_id_idx
+      ON measurements (station_id)
+    `;
+  
+    await sql`
+      CREATE INDEX IF NOT EXISTS measurements_fields_idx
+      ON measurements USING GIN (fields)
+    `;
+  } catch(error) {
+    console.log("Error initializing DB");
+    console.error(error);
+    process.exit(1);
+  }
 }
 
 async function getOrCreateStation(scraperName, medium, location) {
@@ -105,16 +112,20 @@ export async function writeScraperResult(scraperName, result) {
   const fieldValues = Object.fromEntries(
     Object.entries(fields).map(([key, { value }]) => [key, value])
   );
-
-  await sql`
-    INSERT INTO measurements (time, station_id, scraped_at, fields)
-    VALUES (
-      ${new Date(time)},
-      ${stationId},
-      ${new Date(scrapedAt)},
-      ${sql.json(fieldValues)}
-    )
-  `;
+  try {
+    await sql`
+      INSERT INTO measurements (time, station_id, scraped_at, fields)
+      VALUES (
+        ${new Date(time)},
+        ${stationId},
+        ${new Date(scrapedAt)},
+        ${sql.json(fieldValues)}
+      )
+    `;
+    console.log("Successful DB write of scraper ", scraperName);
+  } catch(error) {
+    console.error("Failed to write to DB with the scraper ", scraperName);
+    console.error(error);
 }
 
 export async function closeDb() {
