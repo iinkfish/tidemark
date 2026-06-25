@@ -47,7 +47,7 @@ async function installDeps({ dir }) {
     return;
   }
   console.log(`[${dir}] Installing deps...`);
-  await execAsync("npm install --prefer-offline", { cwd: dir }); // changed: execSync → execAsync
+  await execAsync("npm install --prefer-offline", { cwd: dir }); 
 }
 
 async function runScraperInChildProcess(file) {
@@ -55,8 +55,8 @@ async function runScraperInChildProcess(file) {
 
   return new Promise((resolve, reject) => {
     const child = fork(runnerPath, [file], {
-      env: {}, // changed: empty env, no leaking of parent env vars
-      silent: false,
+      env: {}, 
+      silent: false, //change to true when stable
     });
 
     const timer = setTimeout(() => {
@@ -89,7 +89,7 @@ async function runScraper(file, name) {
     const result = await runScraperInChildProcess(file);
     await writeScraperResult(name, result);
     console.log(`[${name}] Result:`, result);
-    console.log(`[${name}] Written to InfluxDB`);
+    //console.log(`[${name}] Written to InfluxDB`);
   } catch (err) {
     console.error(`[${name}] Failed:`, err.message);
   }
