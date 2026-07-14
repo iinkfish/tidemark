@@ -41,5 +41,4 @@ services:
 
 ## TODO
 1. Write a docker compose with build arguments
-2. Release a prebuilt docker image which can just be pulled
 3. Modify so schedule and schema gets read from config files instead of src file
