@@ -26,7 +26,7 @@ PG_PASSWORD=YOUR_PG_PASSWORD
 ```
 services:
   app:
-    image: ghcr.io/iinkfish/tidemark:0.1.0
+    image: ghcr.io/iinkfish/tidemark:latest
     environment:
       PG_HOST: YOUR_PG_HOST
       PG_PORT: 5432
