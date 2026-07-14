@@ -10,7 +10,7 @@ Which means scrapers a scheduled and unscheduled if they're removed from the dir
 This gives the benefit that the container doesn't have to be rebuild each time a new scraper is added. 
 
 ## Dev Comments
-This is build and deployed with Dokploy with a Dockerfile. It's pretty easy to build a container yourself but right now developers have to use their own build pipeline
+This is build and deployed with Dokploy with a Dockerfile. But you can also use the prebuilt image. 
 You have to run your own postgres DB and add the environment variables yourself. 
 
 Env vars: 
@@ -20,6 +20,23 @@ PG_PORT=5432
 PG_DATABASE=tidemark-data
 PG_USER=YOUR_PG_USER
 PG_PASSWORD=YOUR_PG_PASSWORD
+```
+
+### Example Docker Compose
+```
+services:
+  app:
+    image: ghcr.io/iinkfish/tidemark:0.1.0
+    environment:
+      PG_HOST: YOUR_PG_HOST
+      PG_PORT: 5432
+      PG_DATABASE: tidemark-data
+      PG_USER: YOUR_PG_USER
+      PG_PASSWORD: YOUR_PG_PASSWORD
+    volumes:
+      - ./scrapers:/app/src/scrapers
+      - ./schemas:/app/schemas
+    restart: unless-stopped
 ```
 
 ## TODO
