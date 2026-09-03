@@ -24,6 +24,8 @@ const DB_WRITE = process.env.DB_WRITE || false;
 console.log("Config");
 console.log(API_URL, DB_WRITE);
 
+if(!DB_WRITE) console.log("Verify of passing DB_WRITE check (Should come up if DB_WRITE is false)")
+
 // file path → Cron instance
 const scheduled = new Map();
 
