@@ -22,7 +22,8 @@ const API_KEY = process.env.TOKEN;
 const DB_WRITE = process.env.DB_WRITE === "true";
 
 console.log("API Config");
-console.log(API_URL, DB_WRITE);
+console.log("API URL: ", API_URL);
+console.log("Direct DB write: ", DB_WRITE);
 
 // file path → Cron instance
 const scheduled = new Map();
@@ -64,8 +65,6 @@ async function writeToWithAPI(scraperName, payload) {
 
   let completePayload = payload;
   completePayload.name = scraperName;
-  console.log("Try to write with api");
-  console.log('Authorization header:', `Bearer ${token}`);
 
   try {
     const response = await fetch(url, {
@@ -79,6 +78,13 @@ async function writeToWithAPI(scraperName, payload) {
     });
 
     if (!response.ok) {
+      let errorDetail;
+      try {
+        errorDetail = await response.json(); // most APIs return JSON error bodies
+      } catch {
+        errorDetail = await response.text().catch(() => '(no body)');
+      }
+      console.error('Error response body:', errorDetail);
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
 
@@ -126,12 +132,12 @@ async function runScraper(file, name) {
   console.log(`[${new Date().toISOString()}] Running: ${name}`);
   try {
     const result = await runScraperInChildProcess(file);
+    console.log(`[${name}] Scraping result:`, result);
     if (!DB_WRITE) {
       await writeToWithAPI(name, result);
     } else {
       await writeScraperResult(name, result);
     }
-    console.log(`[${name}] Result:`, result);
     //console.log(`[${name}] Written to InfluxDB`);
   } catch (err) {
     console.error(`[${name}] Failed:`, err.message);
