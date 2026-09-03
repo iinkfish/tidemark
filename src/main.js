@@ -61,6 +61,7 @@ async function writeToWithAPI(scraperName, payload) {
 
   let completePayload = payload;
   completePayload.name = scraperName;
+  console.log("Try to write with api")
 
   try {
     const response = await fetch(url, {
