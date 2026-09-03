@@ -1,4 +1,5 @@
 import { readdir, access } from "fs/promises";
+import "dotenv/config";
 import { resolve, dirname } from "path";
 import { fileURLToPath, pathToFileURL } from "url";
 import { exec } from "child_process";
@@ -15,6 +16,10 @@ const DEFAULT_SCHEDULE = "0 * * * *";
 const DISCOVERY_SCHEDULE = "*/1 * * * *";
 const SCRAPER_TIMEOUT_MS = 30000;
 const DEFAULT_SCHEMA = "environmental-schema"
+
+const API_URL = process.env.API_URL;
+const API_KEY = process.env.TOKEN;
+const DB_WRITE = process.env.DB_WRITE || false;
 
 // file path → Cron instance
 const scheduled = new Map();
@@ -47,7 +52,36 @@ async function installDeps({ dir }) {
     return;
   }
   console.log(`[${dir}] Installing deps...`);
-  await execAsync("npm install --prefer-offline", { cwd: dir }); 
+  await execAsync("npm install --prefer-offline", { cwd: dir });
+}
+
+async function writeToWithAPI(scraperName, payload) {
+  const url = API_URL;
+  const token = API_KEY;
+
+  let completePayload = payload;
+  completePayload.name = scraperName;
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(completePayload)
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('Success:', data);
+  } catch (error) {
+    console.error('Error:', error);
+  }
 }
 
 async function runScraperInChildProcess(file) {
@@ -55,7 +89,7 @@ async function runScraperInChildProcess(file) {
 
   return new Promise((resolve, reject) => {
     const child = fork(runnerPath, [file], {
-      env: {}, 
+      env: {},
       silent: false, //change to true when stable
     });
 
@@ -87,7 +121,11 @@ async function runScraper(file, name) {
   console.log(`[${new Date().toISOString()}] Running: ${name}`);
   try {
     const result = await runScraperInChildProcess(file);
-    await writeScraperResult(name, result);
+    if (!DB_WRITE) {
+      await writeToWithAPI(name, result);
+    } else {
+      await writeScraperResult(name, result);
+    }
     console.log(`[${name}] Result:`, result);
     //console.log(`[${name}] Written to InfluxDB`);
   } catch (err) {
