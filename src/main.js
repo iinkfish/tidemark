@@ -21,6 +21,9 @@ const API_URL = process.env.API_URL;
 const API_KEY = process.env.TOKEN;
 const DB_WRITE = process.env.DB_WRITE || false;
 
+console.log("Config");
+console.log(API_URL, DB_WRITE);
+
 // file path → Cron instance
 const scheduled = new Map();
 
